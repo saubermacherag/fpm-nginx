@@ -168,11 +168,18 @@ RUN apk update && apk add --update \
     && rm /var/www/html/install_composer.php
 
 # ------------------------ start fpm/nginx ------------------------
-
+# s6 overlay services
 COPY services.d /etc/services.d
 RUN chmod +x -R /etc/services.d
+
+# nginx conf
 COPY nginx.conf /etc/nginx/nginx.conf
 COPY server.conf /etc/nginx/conf.d/server.conf
+
+# fpm config
+ADD conf/log.conf /usr/local/etc/php-fpm.d/zz-log.conf:Z
+ADD conf/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+ADD conf/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 # Adding the opcache configuration into the wrong directory intentionally.
 # This is enabled at runtime
