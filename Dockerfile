@@ -1,4 +1,4 @@
-FROM php:7.3.5-fpm-alpine3.8
+FROM php:7.0.33-fpm-alpine3.7
 
 WORKDIR /var/www/html
 
@@ -149,16 +149,18 @@ RUN apk add --no-cache curl \
     && apk del curl
 
 # ------------------------ Common PHP Dependencies ------------------------
-RUN apk update && apk add \
+RUN apk update && apk add --update \
         # needed for gd
-        libpng-dev libjpeg-turbo-dev \
+        freetype-dev libpng-dev libjpeg-turbo-dev libmcrypt-dev zlib-dev icu-dev g++ \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     # Installing composer
     && php /var/www/html/install_composer.php \
     # Installing common Laravel dependencies
-    && docker-php-ext-install mbstring pdo_mysql gd \
+    && docker-php-ext-install -j$(nproc) intl pdo_mysql mbstring gd zip \
     	# Adding opcache
     	opcache \
+    && docker-php-ext-configure intl \
+    && docker-php-ext-configure gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ \
     # For parallel composer dependency installs
     && composer global require hirak/prestissimo \
     && mkdir -p /home/www-data/.composer/cache \
@@ -168,7 +170,9 @@ RUN apk update && apk add \
 # ------------------------ start fpm/nginx ------------------------
 
 COPY services.d /etc/services.d
+RUN chmod +x -R /etc/services.d
 COPY nginx.conf /etc/nginx/nginx.conf
+COPY server.conf /etc/nginx/conf.d/server.conf
 
 # Adding the opcache configuration into the wrong directory intentionally.
 # This is enabled at runtime

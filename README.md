@@ -1,47 +1,32 @@
-# FPM/Nginx - [Dockerhub Repo](https://hub.docker.com/r/bkuhl/fpm-nginx/)
+# FPM/Nginx - [Fork Origin](https://github.com/bkuhl/fpm-nginx)
 
-[![Build Status](https://travis-ci.org/bkuhl/fpm-nginx.svg?branch=master)](https://travis-ci.org/bkuhl/fpm-nginx)
+This is a fork repo which builds a 2in1 Docker Image containing php-fpm and a preconfigured nginx
+for serving CakePHP applications.
 
-This container is intended to run Laravel applications and thus comes with a few items to assist:
-
- * [Composer](https://getcomposer.org) (with [hirak/prestissimo](https://github.com/hirak/prestissimo) for parallel dependency installation)
- * PHP Extensions
-   * [mbstring](http://php.net/manual/en/book.mbstring.php)
-   * [pdo_mysql](http://php.net/manual/en/ref.pdo-mysql.php)
-   * [gd](http://php.net/manual/en/book.image.php)
-   * [opcache](http://php.net/manual/en/book.opcache.php) - Automatically enabled when `APP_ENV=production`
- * Adding a default virtual host serving apps from `/var/www/html/public`
-   
-For Laravel applications, see [bkuhl/laravel-fpm-nginx](https://github.com/bkuhl/laravel-fpm-nginx).
-
-For a container to run cron and other CLI tasks, check out [bkuhl/php](https://github.com/bkuhl/php).
-
-**Why 2 processes in 1 container?**
-
- 1. DNS issues - Both the fpm/nginx containers need to be redeployed when your application is updated.  Nginx maintains an internal DNS cache, so while Docker may ensure zero downtime for fpm containers, nginx's internal workings can still create problems.  The only way to solve this (that I've found) is to restart the nginx process.  Having them on the same container eliminates the problem.
- 2. Laravel Mix - The front/backend of applications are kind of coupled when using something like Laravel Mix.  The index of assets it creates need to be on both containers and running these separately is possible, but redundant.  
-
-## Adding Processes
-
-This container uses [S6 Overlay](https://github.com/just-containers/s6-overlay) as it's process monitoring solution.  Add a new directory to `services.d` with a `run` file in it where `run` in a shell script that kicks off the process.  The rest is taken care of for you.
-
-## Example Dockerfile
+## Example Dockerfile (building a react/cakephp app)
 
 ```
-FROM bkuhl/fpm-nginx:latest
+# This part is intended to build react and php parts of the application
+FROM node:8.16.0-jessie-slim as builder
+MAINTAINER devops@wastebox.biz
+
+WORKDIR /app
+ENV PATH /usr/src/app/node_modules/.bin:$PATH
+COPY . .
+RUN npm ci
+RUN npm run build
+
+FROM <repo-name>:<version-name>
 
 WORKDIR /var/www/html
 
-# Copy the application files to the container
-ADD --chown=www-data:www-data  . /var/www/html
+# copy built app to nginx
+COPY --chown=www-data:www-data --from=builder /app /var/www/html
 
 USER www-data
 
-    # production-ready dependencies
-RUN composer install  --no-interaction --optimize-autoloader --no-dev --prefer-dist \
-
-    # keep the container light weight
-    && rm -rf /home/www-data/.composer/cache
+RUN ls -la && composer install --verbose --no-interaction --optimize-autoloader --no-dev --prefer-dist && \
+  rm -rf /home/www-data/.composer/cache
 
 USER root
 ```
