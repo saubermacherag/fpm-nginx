@@ -179,6 +179,7 @@ COPY server.conf /etc/nginx/conf.d/server.conf
 # fpm config
 ADD conf/log.conf /usr/local/etc/php-fpm.d/zz-log.conf:Z
 ADD conf/uploads.ini /usr/local/etc/php/conf.d/uploads.ini
+ADD conf/global.conf /usr/local/etc/global.conf
 ADD conf/www.conf /usr/local/etc/php-fpm.d/www.conf
 
 # Adding the opcache configuration into the wrong directory intentionally.
