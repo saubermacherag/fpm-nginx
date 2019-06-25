@@ -1,4 +1,4 @@
-FROM php:7.0.33-fpm-alpine3.7
+FROM php:7.3.6-fpm-alpine3.9
 
 WORKDIR /var/www/html
 
@@ -151,7 +151,7 @@ RUN apk add --no-cache curl \
 # ------------------------ Common PHP Dependencies ------------------------
 RUN apk update && apk add --update \
         # needed for gd
-        freetype-dev libpng-dev libjpeg-turbo-dev libmcrypt-dev zlib-dev icu-dev g++ \
+        freetype-dev libpng-dev libjpeg-turbo-dev libmcrypt-dev libzip-dev icu-dev g++ \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* \
     # Installing composer
     && php /var/www/html/install_composer.php \

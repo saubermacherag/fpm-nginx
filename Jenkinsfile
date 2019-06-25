@@ -19,7 +19,7 @@ pipeline {
                     ]) {
                         docker.build('pinkrobin/ext/cakephp')
                         docker.withRegistry('https://${AWS_ACCOUNT_ID}.dkr.ecr.eu-central-1.amazonaws.com', 'ecr:eu-central-1:dockerman') {
-                            docker.image('pinkrobin/ext/cakephp').push('php7.0.33-nginx1.15.12')
+                            docker.image('pinkrobin/ext/cakephp').push('php7.3.6-nginx1.15.12')
                         }
                     }
                 }
